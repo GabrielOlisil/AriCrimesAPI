@@ -7,6 +7,5 @@ class Usuario(SQLModel, table=True):
     telefone: str | None = None
     endereco: str | None = None
     email: str = Field(unique=True)
-    google_auth_user_id:  str = Field(unique=True, index=True)
-    senha: str | None = None
     profile_pic_url: str | None = Field(default=None)
+    keycloak_id: str = Field(unique=True, index=True)

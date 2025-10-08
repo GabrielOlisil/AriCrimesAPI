@@ -887,7 +887,9 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "firebase-admin" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
+    { name = "requests" },
     { name = "sqlmodel" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -898,7 +900,9 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.117.1" },
     { name = "firebase-admin", specifier = ">=7.1.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.10" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "requests", specifier = ">=2.32.5" },
     { name = "sqlmodel", specifier = ">=0.0.25" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.37.0" },
 ]
