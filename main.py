@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status
 from controllers.categoria_controller import router as categoria_router
 from controllers.auth_controller import router as auth_router
+from controllers.relato_controller import router as relato_router
 
 from auth import auth
 
@@ -27,6 +28,7 @@ app = FastAPI(title="Ari crimes API",
 
 app.include_router(categoria_router)
 app.include_router(auth_router)
+app.include_router(relato_router)
 
 
 @app.get(

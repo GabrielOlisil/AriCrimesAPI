@@ -15,5 +15,5 @@ async def login_or_register_user(
 
 
 @router.get("/me")
-async def get_my_profile(user_data: Usuario = Depends(get_current_admin_user)):
+async def get_my_profile(user_data: Usuario = Depends(get_current_user)):
     return {"message": f"Olá, {user_data.nome}! Seu UID é {user_data.id} e seu acesso está validado."}
