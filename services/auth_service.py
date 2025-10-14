@@ -78,7 +78,11 @@ def login_or_register(
     uid = token['sub']
     nome = token['name']
     email = token['email']
-    picture = token['picture']
+
+    picture = None;
+
+    if 'picture' in token:
+        picture = token['picture']
 
     statement = select(Usuario).where(Usuario.keycloak_id == uid)
     db_user = session.exec(statement).first()
