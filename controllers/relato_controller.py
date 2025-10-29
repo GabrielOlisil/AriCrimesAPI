@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 
 from dtos import RelatoCreateDto
 from database import SessionDep
@@ -14,5 +16,5 @@ async def create_relato(relato: RelatoCreateDto, session: SessionDep, user = Dep
 
 
 @router.get("/")
-async def get_all_relatos(db: SessionDep, offset: int, limit: int):
+async def get_all_relatos(db: SessionDep, offset: int=0, limit:  Annotated[int, Query(le=100)] = 100):
     return relato_service.get_all_relatos(db, offset, limit)
