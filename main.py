@@ -13,13 +13,11 @@ from auth import auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     print("🚀 Aplicação iniciando... buscando cliente JWKS do Keycloak.")
     auth.jwks_client = auth.get_jwks_client()
     print("✅ Cliente JWKS pronto.")
 
     yield
-
 
     print("👋 Aplicação encerrada.")
 
@@ -34,7 +32,6 @@ servers = [
         "description": "Ambiente de Produçãoo"
     },
 
-
 ]
 
 origins = [
@@ -47,7 +44,6 @@ app = FastAPI(title="Ari crimes API",
               servers=servers,
               lifespan=lifespan)
 
-
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(categoria_router)
@@ -55,6 +51,7 @@ app.include_router(auth_router)
 app.include_router(relato_router)
 
 app.include_router(heatmap_router)
+
 
 @app.get(
     "/healthcheck",
@@ -68,6 +65,8 @@ app.include_router(heatmap_router)
         }
     })
 async def healthcheck():
+    """
+    Endpoint simples para verificar se a API está online e respondendo.
+    Usado por serviços de monitoramento (como o CapRover) para saber se a aplicação está "viva".
+    """
     return {"status": "ok"}
-
-

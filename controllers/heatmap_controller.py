@@ -3,6 +3,7 @@ from typing import Optional
 from dtos.heatmap.heatmap_cicrle import HeatmapCircle
 from fastapi import APIRouter, Query
 from haversine import haversine, Unit
+from dtos.heatmap.heatmap_response import HeatmapResponse, pointsResponse
 
 from database import SessionDep
 from sqlmodel import select
@@ -23,6 +24,19 @@ def get_heatmap_data(
         eps_km: float = Query(0.5, description="Raio de busca (em Km) para agrupar pontos em um cluster.", gt=0),
         min_samples: int = Query(3, description="Número mínimo de relatos para formar um cluster.", gt=0)
 ):
+    """
+        **Descrição:** Processa todos os relatos (podendo filtrar por data) e os agrupa
+        em 'clusters' (círculos) para exibição no mapa de calor.
+        Utiliza o algoritmo DBSCAN para encontrar áreas com alta concentração de relatos.
+
+        **Parâmetros de Query:**
+        - `start_date` (Opcional): Filtra relatos a partir desta data/hora.
+        - `end_date` (Opcional): Filtra relatos até esta data/hora.
+        - `eps_km`: O raio (em km) que o algoritmo usa para agrupar pontos.
+        - `min_samples`: O número mínimo de relatos necessários dentro do raio `eps_km`
+          para formar um cluster.
+
+        """
     query = select(Relato)
     if start_date:
         query = query.where(Relato.data_furto >= start_date)
@@ -31,9 +45,16 @@ def get_heatmap_data(
 
     relatos = session.exec(query).all()
 
+    points: list[pointsResponse]= []
+
+    for relato in relatos:
+        points.append(pointsResponse(lat=relato.latitude, long=relato.longitude))
+
+
+
     if len(relatos) < min_samples:
         # Não há dados suficientes para clusterizar
-        return []
+        return HeatmapResponse(circles=[], points=points)
 
     # 2. Prepara os dados para o DBSCAN
     # Coordenadas em [latitude, longitude]
@@ -91,4 +112,4 @@ def get_heatmap_data(
             )
         )
 
-    return heatmap_circles
+    return HeatmapResponse(circles=heatmap_circles, points=points)

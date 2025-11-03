@@ -324,6 +324,19 @@ wheels = [
 ]
 
 [[package]]
+name = "geoalchemy2"
+version = "0.18.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "sqlalchemy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d3/15/88398e863a9e044e06957d0f214cc5f7ef3c1dee4c540d828bfa6c7d4535/geoalchemy2-0.18.0.tar.gz", hash = "sha256:9a04690cc33fbc580d15c7c028d9b1b1ea08271489730096c7092e1d486c2b7a", size = 239129, upload-time = "2025-07-21T10:51:47.52Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/f5/1e36e49d4380d70d58c777953fd3c465b4fb242309b6bd6b88e45ef11bd7/geoalchemy2-0.18.0-py3-none-any.whl", hash = "sha256:ff0fe7339ba535c50845a2c7e8817a20c164364128991d795733b3c5904b1ee1", size = 81248, upload-time = "2025-07-21T10:51:46.291Z" },
+]
+
+[[package]]
 name = "google-api-core"
 version = "2.25.1"
 source = { registry = "https://pypi.org/simple" }
@@ -762,6 +775,15 @@ wheels = [
 ]
 
 [[package]]
+name = "packaging"
+version = "25.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/d4/1fc4078c65507b51b96ca8f8c3ba19e6a61c8253c72794544580a7b6c24d/packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f", size = 165727, upload-time = "2025-04-19T11:48:59.673Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484", size = 66469, upload-time = "2025-04-19T11:48:57.875Z" },
+]
+
+[[package]]
 name = "proto-plus"
 version = "1.26.1"
 source = { registry = "https://pypi.org/simple" }
@@ -956,6 +978,7 @@ dependencies = [
     { name = "alembic" },
     { name = "fastapi", extra = ["standard"] },
     { name = "firebase-admin" },
+    { name = "geoalchemy2" },
     { name = "haversine" },
     { name = "numpy" },
     { name = "psycopg", extra = ["binary"] },
@@ -972,6 +995,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.16.5" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.117.1" },
     { name = "firebase-admin", specifier = ">=7.1.0" },
+    { name = "geoalchemy2", specifier = ">=0.18.0" },
     { name = "haversine", specifier = ">=2.9.0" },
     { name = "numpy", specifier = ">=2.3.4" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.10" },
