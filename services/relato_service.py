@@ -5,10 +5,10 @@ from fastapi import HTTPException, status
 from dtos import RelatoCreateDto
 from sqlmodel import Session, select, text
 from models import Relato, Usuario
+from sqlalchemy.orm import selectinload
 
 
-def create_relato(relato: RelatoCreateDto, user: Usuario,  db: Session):
-
+def create_relato(relato: RelatoCreateDto, user: Usuario, db: Session):
     try:
         db_relato = Relato(**relato.model_dump())
 
@@ -24,13 +24,18 @@ def create_relato(relato: RelatoCreateDto, user: Usuario,  db: Session):
 
 
 def get_all_relatos(db: Session, offset: int, limit: int) -> Sequence[Relato]:
-        relatos = db.exec(select(Relato).offset(offset).limit(limit)).all()
-        return relatos
+    relatos = db.exec(select(Relato).options(selectinload(Relato.fotos)).offset(offset).limit(limit)).all()
+    return relatos
 
 
 def get_relato_by_id(db: Session, relato_id: int) -> Relato | None:
     """Busca um relato específico pelo ID."""
-    relato = db.get(Relato, relato_id)
+    query = (
+        select(Relato)
+        .where(Relato.id == relato_id)
+        .options(selectinload(Relato.fotos))
+    )
+    relato = db.exec(query).first()
     return relato
 
 
@@ -92,7 +97,8 @@ def get_latest_relatos(db: Session, offset: int, limit: int) -> Sequence[Relato]
     """Busca os relatos mais recentes ordenados por data de registro."""
     relatos = db.exec(
         select(Relato)
-        .order_by(Relato.data_registro.desc())
+        .options(selectinload(Relato.fotos))
+        .order_by(Relato.data_furto.desc())
         .offset(offset)
         .limit(limit)
     ).all()
@@ -117,26 +123,29 @@ def get_relatos_nearby(db: Session, latitude: float, longitude: float, radius_km
         SELECT *
         FROM relato
         WHERE ST_DWithin(
-                      localizacao_geog, 
-                      ST_GeogFromText(:ponto_wkt), 
-                      :raio_metros 
+                      localizacao_geog,
+                      ST_GeogFromText(:ponto_wkt),
+                      :raio_metros
               )
         """
     )
 
     # Executa a consulta com segurança, passando os parâmetros
     params = {"ponto_wkt": ponto_central_wkt, "raio_metros": radius_em_metros}
+    ids_dos_relatos = db.exec(stmt, params).scalars().all()
 
-    # Executamos a consulta SQL nativa e mapeamos os resultados de volta
-    # para a classe (modelo) Pydantic/SQLModel 'Relato'.
-    resultados = db.exec(stmt, params).all()
+    if not ids_dos_relatos:
+        return []
 
-    # Converte os resultados (que são Tuples/Rows) de volta para objetos Relato
-    # Se db.exec(stmt).all() já retornar objetos Relato, melhor ainda.
-    # Mas se retornar Rows, precisamos mapear:
-    relatos_proximos = [Relato.model_validate(row, from_attributes=True) for row in resultados]
+    # Etapa 2: Buscar os objetos Relato completos com suas fotos (eficiente)
+    query = (
+        select(Relato)
+        .where(Relato.id.in_(ids_dos_relatos))
+        .options(selectinload(Relato.fotos))
+    )
+    relatos = db.exec(query).all()
 
-    return relatos_proximos
+    return relatos
 
 
 def create_relatos_batch(relatos_data: list[RelatoCreateDto], admin_user: Usuario, db: Session) -> int:

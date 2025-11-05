@@ -8,10 +8,10 @@ from dtos.relatos.relato_batch_response import RelatoBatchResponseDto
 from models import Relato, Usuario
 from services.auth_service import get_current_user, get_current_admin_user
 import services.relato_service as relato_service
-
+from dtos import RelatoRead
 router = APIRouter(prefix="/relato", tags=["Relato"])
 
-@router.post("/", response_model=Relato, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Relato, status_code=status.HTTP_201_CREATED)
 async def create_relato(relato: RelatoCreateDto, session: SessionDep, user = Depends(get_current_user)):
     """
     Cria um novo relato de crime. O relato é automaticamente
@@ -21,7 +21,7 @@ async def create_relato(relato: RelatoCreateDto, session: SessionDep, user = Dep
     return relato_service.create_relato(relato, user, session)
 
 
-@router.get("/", response_model=list[Relato])
+@router.get("", response_model=list[RelatoRead])
 async def get_all_relatos(db: SessionDep, offset: int=0, limit:  Annotated[int, Query(le=100)] = 100):
     """
 
@@ -33,7 +33,7 @@ async def get_all_relatos(db: SessionDep, offset: int=0, limit:  Annotated[int, 
     return relato_service.get_all_relatos(db, offset, limit)
 
 
-@router.get("/latest/", response_model=list[Relato])
+@router.get("/latest", response_model=list[RelatoRead])
 async def get_latest_relatos(
         db: SessionDep,
         offset: int = 0,
@@ -43,7 +43,7 @@ async def get_latest_relatos(
     return relato_service.get_latest_relatos(db, offset, limit)
 
 
-@router.get("/nearby/", response_model=list[Relato])
+@router.get("/nearby", response_model=list[RelatoRead])
 async def get_relatos_nearby(
         db: SessionDep,
         lat: float = Query(..., description="Latitude do ponto central", example=-9.9740),
@@ -54,7 +54,7 @@ async def get_relatos_nearby(
     return relato_service.get_relatos_nearby(db=db, latitude=lat, longitude=lon, radius_km=radius)
 
 
-@router.get("/{relato_id}", response_model=Relato)
+@router.get("/{relato_id}", response_model=RelatoRead)
 async def get_relato_by_id(relato_id: int, db: SessionDep):
     """Pega um relato específico pelo ID."""
     relato = relato_service.get_relato_by_id(db, relato_id)
@@ -109,7 +109,7 @@ async def delete_relato(
     return RelatoDeleteResponseDto(success=True, message="Relato deletado com sucesso")
 
 
-@router.post("/batch/", response_model=RelatoBatchResponseDto, status_code=status.HTTP_201_CREATED)
+@router.post("/batch", response_model=RelatoBatchResponseDto, status_code=status.HTTP_201_CREATED)
 async def create_relatos_batch(
         relatos_data: list[RelatoCreateDto],
         db: SessionDep,

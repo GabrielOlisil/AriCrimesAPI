@@ -7,6 +7,8 @@ from controllers.categoria_controller import router as categoria_router
 from controllers.auth_controller import router as auth_router
 from controllers.relato_controller import router as relato_router
 from controllers.heatmap_controller import router as heatmap_router
+from controllers.foto_relato_controller import router as foto_router
+
 
 from auth import auth
 
@@ -51,6 +53,7 @@ app.include_router(auth_router)
 app.include_router(relato_router)
 
 app.include_router(heatmap_router)
+app.include_router(foto_router)
 
 
 @app.get(

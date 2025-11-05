@@ -3,3 +3,6 @@ from .categorias.categoria_delete_response import CategoriaDeleteResponseDto
 from .relatos.relato_create_dto import  RelatoCreateDto
 from .relatos.relato_delete_response import RelatoDeleteResponseDto
 from .relatos.relato_batch_response import RelatoBatchResponseDto
+from .fotos.foto_relato_response import FotoRelatoResponseDto
+from .fotos.foto_relato_read import FotoRelatoRead
+from .relatos.relato_read import RelatoRead

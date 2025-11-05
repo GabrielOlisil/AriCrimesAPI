@@ -10,7 +10,7 @@ from controllers.auth_controller import get_current_admin_user, get_current_user
 router = APIRouter(prefix="/categorias", tags=["Categorias"])
 
 
-@router.get("/", response_model=list[Categoria])
+@router.get("", response_model=list[Categoria])
 def get_categorias(session: SessionDep , offset: int=0, limit: Annotated[int, Query(le=100)] = 100):
     """
     Retorna uma lista paginada de todas as categorias de crimes disponíveis para usar no cadastro de relatos.
@@ -19,7 +19,7 @@ def get_categorias(session: SessionDep , offset: int=0, limit: Annotated[int, Qu
     return categoria_service.get_all_categorias(db=session, offset=offset, limit=limit)
 
 
-@router.post("/", response_model=Categoria, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Categoria, status_code=status.HTTP_201_CREATED)
 def create_categoria(categoria: CategoriaCreateDto,  session: SessionDep, user = Depends(get_current_user)):
     """
     Cria uma nova categoria de crime.
