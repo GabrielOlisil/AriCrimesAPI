@@ -33,6 +33,18 @@ async def get_all_relatos(db: SessionDep, offset: int=0, limit:  Annotated[int, 
     return relato_service.get_all_relatos(db, offset, limit)
 
 
+@router.get("/my", response_model=list[RelatoRead])
+async def get_my_relatos(
+        db: SessionDep,
+        offset: int = 0,
+        limit: Annotated[int, Query(le=100)] = 10,
+        user: Usuario = Depends(get_current_user)
+
+):
+    """Pega os últimos relatos registrados, ordenados por data de registro."""
+    return relato_service.get_my_relatos(db, offset, limit, user.id)
+
+
 @router.get("/latest", response_model=list[RelatoRead])
 async def get_latest_relatos(
         db: SessionDep,

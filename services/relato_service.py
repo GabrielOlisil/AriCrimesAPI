@@ -104,6 +104,18 @@ def get_latest_relatos(db: Session, offset: int, limit: int) -> Sequence[Relato]
     ).all()
     return relatos
 
+def get_my_relatos(db: Session, offset: int, limit: int, uid: int) -> Sequence[Relato]:
+    """Busca relatos dos usuários apenas"""
+    relatos = db.exec(
+        select(Relato)
+        .where(Relato.usuario_id == uid)
+        .options(selectinload(Relato.fotos))
+        .order_by(Relato.data_furto.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+    return relatos
+
 
 def get_relatos_nearby(db: Session, latitude: float, longitude: float, radius_km: float) -> Sequence[Relato]:
     """
