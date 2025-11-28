@@ -6,7 +6,7 @@ from dtos import RelatoCreateDto
 from sqlmodel import Session, select, text
 from models import Relato, Usuario
 from sqlalchemy.orm import selectinload
-
+from datetime import datetime
 
 def create_relato(relato: RelatoCreateDto, user: Usuario, db: Session):
     try:
@@ -182,3 +182,45 @@ def create_relatos_batch(relatos_data: list[RelatoCreateDto], admin_user: Usuari
         db.rollback()
         # Se um falhar, nenhum é criado
         raise HTTPException(status_code=500, detail=f'Erro ao criar relatos em lote: {e}')
+
+
+# 1. Obter relatos por Categoria
+def get_relatos_by_category(db: Session, category_id: int, offset: int, limit: int) -> Sequence[Relato]:
+    query = (
+        select(Relato)
+        .where(Relato.categoria_id == category_id)
+        .options(selectinload(Relato.fotos))
+        .offset(offset)
+        .limit(limit)
+    )
+    return db.exec(query).all()
+
+# 2. Obter relatos por Usuário Específico (Público)
+def get_relatos_by_user_id(db: Session, user_id: int, offset: int, limit: int) -> Sequence[Relato]:
+    query = (
+        select(Relato)
+        .where(Relato.usuario_id == user_id)
+        .options(selectinload(Relato.fotos))
+        .offset(offset)
+        .limit(limit)
+    )
+    return db.exec(query).all()
+
+# 3. Obter relatos por Intervalo de Datas
+def get_relatos_by_date_range(
+    db: Session,
+    start_date: datetime,
+    end_date: datetime,
+    offset: int,
+    limit: int
+) -> Sequence[Relato]:
+    query = (
+        select(Relato)
+        .where(Relato.data_furto >= start_date)
+        .where(Relato.data_furto <= end_date)
+        .options(selectinload(Relato.fotos))
+        .order_by(Relato.data_furto.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    return db.exec(query).all()

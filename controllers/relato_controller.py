@@ -9,6 +9,8 @@ from models import Relato, Usuario
 from services.auth_service import get_current_user, get_current_admin_user
 import services.relato_service as relato_service
 from dtos import RelatoRead
+from datetime import datetime
+
 router = APIRouter(prefix="/relato", tags=["Relato"])
 
 @router.post("", response_model=Relato, status_code=status.HTTP_201_CREATED)
@@ -143,3 +145,56 @@ async def create_relatos_batch(
         message=f"{created_count} relatos criados com sucesso.",
         created_count=created_count
     )
+
+
+
+# 1. Endpoint: Filtrar por Categoria
+@router.get("/categoria/{category_id}", response_model=list[RelatoRead])
+async def get_relatos_por_categoria(
+    category_id: int,
+    db: SessionDep,
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100
+):
+    """
+    Retorna relatos filtrados por uma categoria específica.
+    """
+    relatos = relato_service.get_relatos_by_category(db, category_id, offset, limit)
+    return relatos
+
+
+# 2. Endpoint: Filtrar por Usuário (ID específico)
+@router.get("/usuario/{user_id}", response_model=list[RelatoRead])
+async def get_relatos_por_usuario(
+    user_id: int,
+    db: SessionDep,
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100
+):
+    """
+    Retorna todos os relatos feitos por um usuário específico (pelo ID do usuário).
+    """
+    relatos = relato_service.get_relatos_by_user_id(db, user_id, offset, limit)
+    return relatos
+
+
+# 3. Endpoint: Filtrar por Intervalo de Datas
+@router.get("/busca/periodo", response_model=list[RelatoRead])
+async def get_relatos_por_periodo(
+    db: SessionDep,
+    start_date: datetime = Query(..., description="Data inicial (ISO 8601), ex: 2025-01-01T00:00:00"),
+    end_date: datetime = Query(..., description="Data final (ISO 8601), ex: 2025-01-31T23:59:59"),
+    offset: int = 0,
+    limit: Annotated[int, Query(le=100)] = 100
+):
+    """
+    Retorna relatos ocorridos dentro de um intervalo de datas (baseado na data_furto).
+    """
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A data inicial não pode ser maior que a data final."
+        )
+
+    relatos = relato_service.get_relatos_by_date_range(db, start_date, end_date, offset, limit)
+    return relatos

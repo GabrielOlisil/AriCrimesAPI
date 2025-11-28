@@ -23,3 +23,7 @@ class Relato(SQLModel, table=True):
     # ADICIONE O RELACIONAMENTO ABAIXO
     fotos: List["FotoRelato"] = Relationship(back_populates="relato")
 
+
+
+
+
