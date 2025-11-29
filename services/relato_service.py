@@ -29,6 +29,9 @@ def create_relato(relato: RelatoCreateDto, user: Usuario, db: Session):
         db.commit()
 
 
+        db.refresh(db_relato)
+
+
         return db_relato
     except Exception as e:
         db.rollback()
