@@ -21,3 +21,5 @@ class RelatoRead(SQLModel):
 
     # Este campo irá conter a lista de URLs das fotos
     fotos: List[FotoRelatoRead] = []
+
+    numero_confirmacoes: int

@@ -10,6 +10,7 @@ from services.auth_service import get_current_user, get_current_admin_user
 import services.relato_service as relato_service
 from dtos import RelatoRead
 from datetime import datetime
+from services.relato_service import toggle_confirmacao, search_relatos
 
 router = APIRouter(prefix="/relato", tags=["Relato"])
 
@@ -198,3 +199,29 @@ async def get_relatos_por_periodo(
 
     relatos = relato_service.get_relatos_by_date_range(db, start_date, end_date, offset, limit)
     return relatos
+
+
+@router.post("/{relato_id}/confirmar", status_code=status.HTTP_200_OK)
+async def confirmar_relato(
+    relato_id: int,
+    db: SessionDep,
+    user: Usuario = Depends(get_current_user)
+):
+    """
+    Alterna (toggle) a confirmação de um relato.
+    Funciona como um 'Upvote' ou 'Eu também vi'.
+    """
+    return toggle_confirmacao(db, relato_id, user)
+
+@router.get("/search/text", response_model=list[RelatoRead])
+async def buscar_relatos_texto(
+    q: str,
+    db: SessionDep,
+    offset: int = 0,
+    limit: int = 100
+):
+    """
+    Realiza uma busca textual (Full Text Search) nos relatos.
+    Procura no objeto roubado e descrição.
+    """
+    return search_relatos(db, q, offset, limit)

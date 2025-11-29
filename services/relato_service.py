@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 
 from dtos import RelatoCreateDto
 from sqlmodel import Session, select, text
-from models import Relato, Usuario
+from models import Relato, Usuario, ConfirmacaoRelato
 from sqlalchemy.orm import selectinload
 from datetime import datetime
 
@@ -17,14 +17,75 @@ def create_relato(relato: RelatoCreateDto, user: Usuario, db: Session):
         db.add(db_relato)
         db.commit()
         db.refresh(db_relato)
+
+        # Atualiza o search_vector via SQL puro para garantir a sintaxe correta do Postgres
+        stmt = text("""
+                    UPDATE relato
+                    SET search_vector = to_tsvector('portuguese', :texto)
+                    WHERE id = :id
+                    """)
+        texto_busca = f"{db_relato.obj_roubado} {db_relato.descricao}"
+        db.exec(stmt, {"texto": texto_busca, "id": db_relato.id})
+        db.commit()
+
+
         return db_relato
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f'Erro ao criar o relato {e}')
 
 
+def toggle_confirmacao(db: Session, relato_id: int, user: Usuario):
+    relato = db.get(Relato, relato_id)
+    if not relato:
+        raise HTTPException(status_code=404, detail="Relato não encontrado")
+
+    # Verifica se já existe confirmação
+    stmt = select(ConfirmacaoRelato).where(
+        ConfirmacaoRelato.relato_id == relato_id,
+        ConfirmacaoRelato.usuario_id == user.id
+    )
+    existing = db.exec(stmt).first()
+
+    if existing:
+        # Se existe, remove (toggle off)
+        db.delete(existing)
+        db.commit()
+        return {"message": "Confirmação removida", "confirmed": False}
+    else:
+        # Se não existe, cria (toggle on)
+        nova_conf = ConfirmacaoRelato(relato_id=relato_id, usuario_id=user.id)
+        db.add(nova_conf)
+        db.commit()
+        return {"message": "Ocorrência confirmada", "confirmed": True}
+
+
+def search_relatos(db: Session, query_text: str, offset: int, limit: int) -> Sequence[Relato]:
+    # Usa o operador @@ do Postgres para Full Text Search
+    stmt = (
+        select(Relato)
+        .where(text("search_vector @@ plainto_tsquery('portuguese', :q)"))
+        .params(q=query_text)
+        .options(
+            selectinload(Relato.fotos),
+            selectinload(Relato.confirmacoes)
+        )
+        .offset(offset)
+        .limit(limit)
+    )
+    return db.exec(stmt).all()
+
 def get_all_relatos(db: Session, offset: int, limit: int) -> Sequence[Relato]:
-    relatos = db.exec(select(Relato).options(selectinload(Relato.fotos)).offset(offset).limit(limit)).all()
+    query = (
+        select(Relato)
+        .options(
+            selectinload(Relato.fotos),
+            selectinload(Relato.confirmacoes)  # <-- Carrega a lista para podermos contar
+        )
+        .offset(offset)
+        .limit(limit)
+    )
+    relatos = db.exec(query).all()
     return relatos
 
 
@@ -33,7 +94,7 @@ def get_relato_by_id(db: Session, relato_id: int) -> Relato | None:
     query = (
         select(Relato)
         .where(Relato.id == relato_id)
-        .options(selectinload(Relato.fotos))
+        .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
     )
     relato = db.exec(query).first()
     return relato
@@ -97,7 +158,7 @@ def get_latest_relatos(db: Session, offset: int, limit: int) -> Sequence[Relato]
     """Busca os relatos mais recentes ordenados por data de registro."""
     relatos = db.exec(
         select(Relato)
-        .options(selectinload(Relato.fotos))
+        .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
         .order_by(Relato.data_furto.desc())
         .offset(offset)
         .limit(limit)
@@ -109,7 +170,7 @@ def get_my_relatos(db: Session, offset: int, limit: int, uid: int) -> Sequence[R
     relatos = db.exec(
         select(Relato)
         .where(Relato.usuario_id == uid)
-        .options(selectinload(Relato.fotos))
+        .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
         .order_by(Relato.data_furto.desc())
         .offset(offset)
         .limit(limit)
@@ -132,7 +193,7 @@ def get_relatos_nearby(db: Session, latitude: float, longitude: float, radius_km
 
     stmt = text(
         """
-        SELECT *
+        SELECT id
         FROM relato
         WHERE ST_DWithin(
                       localizacao_geog,
@@ -153,7 +214,7 @@ def get_relatos_nearby(db: Session, latitude: float, longitude: float, radius_km
     query = (
         select(Relato)
         .where(Relato.id.in_(ids_dos_relatos))
-        .options(selectinload(Relato.fotos))
+        .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
     )
     relatos = db.exec(query).all()
 
@@ -189,7 +250,7 @@ def get_relatos_by_category(db: Session, category_id: int, offset: int, limit: i
     query = (
         select(Relato)
         .where(Relato.categoria_id == category_id)
-        .options(selectinload(Relato.fotos))
+        .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
         .offset(offset)
         .limit(limit)
     )
@@ -200,7 +261,7 @@ def get_relatos_by_user_id(db: Session, user_id: int, offset: int, limit: int) -
     query = (
         select(Relato)
         .where(Relato.usuario_id == user_id)
-        .options(selectinload(Relato.fotos))
+        .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
         .offset(offset)
         .limit(limit)
     )
@@ -218,7 +279,7 @@ def get_relatos_by_date_range(
         select(Relato)
         .where(Relato.data_furto >= start_date)
         .where(Relato.data_furto <= end_date)
-        .options(selectinload(Relato.fotos))
+        .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
         .order_by(Relato.data_furto.desc())
         .offset(offset)
         .limit(limit)
