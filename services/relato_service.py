@@ -25,7 +25,7 @@ def create_relato(relato: RelatoCreateDto, user: Usuario, db: Session):
                     WHERE id = :id
                     """)
         texto_busca = f"{db_relato.obj_roubado} {db_relato.descricao}"
-        db.exec(stmt, {"texto": texto_busca, "id": db_relato.id})
+        db.exec(stmt, params={"texto": texto_busca, "id": db_relato.id})
         db.commit()
 
 
