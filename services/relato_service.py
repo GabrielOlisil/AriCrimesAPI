@@ -226,25 +226,44 @@ def get_relatos_nearby(db: Session, latitude: float, longitude: float, radius_km
 
 def create_relatos_batch(relatos_data: list[RelatoCreateDto], admin_user: Usuario, db: Session) -> int:
     """
-    Cria múltiplos relatos em lote.
+    Cria múltiplos relatos em lote e atualiza corretamente o vetor de busca (Full Text Search).
     Todos os relatos serão associados ao usuário admin que está fazendo o upload.
     Retorna a contagem de relatos criados.
     """
     count = 0
+    created_relatos = []
+
     try:
+        # 1. Inserir todos os relatos
         for relato_dto in relatos_data:
             db_relato = Relato(**relato_dto.model_dump())
-            db_relato.usuario_id = admin_user.id  # Associa ao admin
+            db_relato.usuario_id = admin_user.id
             db.add(db_relato)
+            created_relatos.append(db_relato)
             count += 1
 
-        # Faz o commit de todos os novos relatos de uma vez
+        # Commit inicial para que os IDs sejam gerados
+        db.commit()
+
+        # 2. Atualizar o search_vector de cada relato recém-criado
+        stmt = text("""
+                    UPDATE relato
+                    SET search_vector = to_tsvector('portuguese', :texto)
+                    WHERE id = :id
+                    """)
+
+        for relato in created_relatos:
+            # Refresh garante que temos os dados atualizados (e o ID válido)
+            db.refresh(relato)
+            texto_busca = f"{relato.obj_roubado} {relato.descricao}"
+            db.exec(stmt, params={"texto": texto_busca, "id": relato.id})
+
+        # Commit final para salvar os vetores
         db.commit()
 
         return count
     except Exception as e:
         db.rollback()
-        # Se um falhar, nenhum é criado
         raise HTTPException(status_code=500, detail=f'Erro ao criar relatos em lote: {e}')
 
 
