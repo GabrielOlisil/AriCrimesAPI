@@ -11,6 +11,7 @@ import services.relato_service as relato_service
 from dtos import RelatoRead
 from datetime import datetime
 from services.relato_service import toggle_confirmacao, search_relatos
+from services.auth_service import get_validated_token, get_validated_admin_token
 
 router = APIRouter(prefix="/relato", tags=["Relato"])
 
