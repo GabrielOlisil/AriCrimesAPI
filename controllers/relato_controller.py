@@ -102,14 +102,17 @@ async def update_relato(
 async def delete_relato(
         relato_id: int,
         db: SessionDep,
-        user: Usuario = Depends(get_current_user)
+        user: Usuario = Depends(get_current_user),
+        token_payload: dict = Depends(get_validated_token)
 ):
     """
     Deleta um relato.
     Apenas o usuário que criou o relato pode deletá-lo.
     """
+
+    is_admin = check_role_in_payload(token_payload, "admin", REALM_ROLES_PATH)
     try:
-        success = relato_service.delete_relato(db, relato_id, user)
+        success = relato_service.delete_relato(db, relato_id, user, is_admin=is_admin)
         if not success:
             # Se retornou False (e não um 403), é porque não foi encontrado
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Relato não encontrado")

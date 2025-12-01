@@ -133,7 +133,7 @@ def update_relato(db: Session, relato_id: int, relato_data: RelatoCreateDto, use
         raise HTTPException(status_code=500, detail=f'Erro ao atualizar o relato: {e}')
 
 
-def delete_relato(db: Session, relato_id: int, user: Usuario) -> bool:
+def delete_relato(db: Session, relato_id: int, user: Usuario, is_admin: bool = False) -> bool:
     """
     Deleta um relato.
     Apenas o proprietário do relato pode deletá-lo.
@@ -144,7 +144,7 @@ def delete_relato(db: Session, relato_id: int, user: Usuario) -> bool:
         return False  # Será tratado como 404 no controller
 
     # Regra de negócio: Apenas o usuário que criou o relato pode deletá-lo
-    if db_relato.usuario_id != user.id:
+    if db_relato.usuario_id != user.id and not is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Usuário não autorizado a deletar este relato")
 
