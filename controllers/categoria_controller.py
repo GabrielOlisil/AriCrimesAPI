@@ -20,7 +20,7 @@ def get_categorias(session: SessionDep , offset: int=0, limit: Annotated[int, Qu
 
 
 @router.post("", response_model=Categoria, status_code=status.HTTP_201_CREATED)
-def create_categoria(categoria: CategoriaCreateDto,  session: SessionDep, user = Depends(get_current_user)):
+def create_categoria(categoria: CategoriaCreateDto,  session: SessionDep, user = Depends(get_current_admin_user)):
     """
     Cria uma nova categoria de crime.
     """

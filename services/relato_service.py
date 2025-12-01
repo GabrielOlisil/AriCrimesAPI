@@ -254,6 +254,7 @@ def get_relatos_by_category(db: Session, category_id: int, offset: int, limit: i
         select(Relato)
         .where(Relato.categoria_id == category_id)
         .options(selectinload(Relato.fotos), selectinload(Relato.confirmacoes))
+        .order_by(Relato.data_furto.desc())
         .offset(offset)
         .limit(limit)
     )
